@@ -1,42 +1,51 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+const cors = require('cors');
+const logRequests = require('./middleware/logRequests.js')
+const apiRules = require('./middleware/apiRules.js');
+const config =  require('./config/config.js');
+const notFound = require('./middleware/errorHandler.js')
+const Logging = require('./lib/Logging.js')
+const morgan = require('morgan')
+const healthCheck = require('./')
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(bodyParser.json());
+const StartServer = () => {
+  /* Database Sync */
+  const sync = async () => await config.psql.sequelize.sync({ alter: true });
+  sync();
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/businessIdeas', { useNewUrlParser: true, useUnifiedTopology: true });
-mongoose.connection.on('connected', () => {
-  console.log('Connected to MongoDB');
-});
+  /* Middleware */
+  app.use(cors({ credentials: true, origin: true }));
+  app.use(logRequests); //Log the requests/response status
+  app.use(morgan('tiny')); //Logs request/response in a minimal format
+  app.use(express.urlencoded({ extended: true })); // Allows recognition incoming request object as strings or arrays
+  app.use(express.json()); //Allow json to be parsed from the incoming requests
+  app.use(notFound);
 
-// Define MongoDB schema and model (e.g., Idea)
-const ideaSchema = new mongoose.Schema({
-  videoTitle: String,
-  businessIdeas: [String],
-});
+  /* Rules of our API */
+  app.use(apiRules);
 
-const Idea = mongoose.model('Idea', ideaSchema);
-
-// API endpoint to save business ideas
-app.post('/api/saveIdeas', (req, res) => {
-  const { videoTitle, businessIdeas } = req.body;
-
-  const newIdea = new Idea({ videoTitle, businessIdeas });
-
-  newIdea.save((err) => {
-    if (err) {
-      res.status(500).json({ message: 'Failed to save ideas' });
-    } else {
-      res.status(200).json({ message: 'Ideas saved successfully' });
-    }
+  /* Routes */
+  
+  /* Healthcheck */
+  app.get('/ping', (req, res) => {
+    res.send('pong');
   });
-});
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+  /* Run Server */
+  app.listen(config.server.port, () => Logging.info(`Server listening on port: ${config.server.port}.`));
+};
+/* Connect to Database and start server */
+const main = async () => {
+  try {
+    
+    await config.psql.sequelize.authenticate();
+    Logging.info('Connected to MySQL Database...');
+    StartServer();
+  } catch (error) {
+    Logging.error(error);
+  }
+}
+
+main();

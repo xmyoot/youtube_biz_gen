@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const logRequests = require('./middleware/logRequests.js')
+const logRequests = require('./middleware/logRequests.js');
 const apiRules = require('./middleware/apiRules.js');
-const config =  require('./config/config.js');
-const notFound = require('./middleware/errorHandler.js')
-const Logging = require('./lib/Logging.js')
-const morgan = require('morgan')
-const healthCheck = require('./')
+const config = require('./config/config.js');
+const notFound = require('./middleware/errorHandler.js');
+const Logging = require('./lib/Logging.js');
+const morgan = require('morgan');
+const healthCheck = require('./');
 
 const app = express();
 
@@ -27,25 +27,26 @@ const StartServer = () => {
   app.use(apiRules);
 
   /* Routes */
-  
+
   /* Healthcheck */
   app.get('/ping', (req, res) => {
     res.send('pong');
   });
 
   /* Run Server */
-  app.listen(config.server.port, () => Logging.info(`Server listening on port: ${config.server.port}.`));
+  app.listen(config.server.port, () =>
+    Logging.info(`Server listening on port: ${config.server.port}.`),
+  );
 };
 /* Connect to Database and start server */
 const main = async () => {
   try {
-    
     await config.psql.sequelize.authenticate();
     Logging.info('Connected to MySQL Database...');
     StartServer();
   } catch (error) {
     Logging.error(error);
   }
-}
+};
 
 main();

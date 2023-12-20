@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "startDev": "nodemon --experimental-modules server.js"
+    "startDev": "nodemon --experimental-modules server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -15,11 +16,11 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "morgan": "^1.10.0",
-    "pg": "^8.11.3",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.35.2"
+    "sequelize": "^6.35.2",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "prettier": "3.1.1"
   }
 }
